@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Guitar Hub — Sam's 30-Day Journey</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0e0e10; color: #f0ede8; margin: 0; }
+  h1,h2,h3,h4,.display { font-family: 'Space Grotesk', sans-serif; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1a1a1e; } ::-webkit-scrollbar-thumb { background: #3a3a42; border-radius: 99px; }
+
+  /* string animation */
+  .string-line { stroke-dasharray: 600; stroke-dashoffset: 600; animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* fret diagram */
+  .fret-dot { width:14px;height:14px;background:#f5c842;border-radius:50%;display:inline-block;margin:2px; }
+  .fret-x { color:#ef4444;font-weight:700;font-size:13px; }
+  .fret-o { color:#22c55e;font-weight:700;font-size:13px; }
+
+  /* day grid */
+  .day-cell { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:1.5px solid #2a2a32;user-select:none; }
+  .day-cell:hover { border-color:#f5c842; }
+  .day-done { background:#1a3a2a;border-color:#22c55e;color:#4ade80; }
+  .day-skipped { background:#2a1a1a;border-color:#ef4444;color:#f87171; }
+  .day-today { border-color:#f5c842;color:#f5c842; }
+  .day-future { color:#3a3a42; }
+
+  /* nav */
+  .nav-btn { padding:8px 18px;border-radius:8px;font-size:14px;font-weight:500;font-family:'Space Grotesk',sans-serif;cursor:pointer;transition:all .15s;border:1.5px solid transparent; white-space: nowrap; }
+  .nav-btn.active { background:#f5c842;color:#0e0e10;border-color:#f5c842; }
+  .nav-btn:not(.active) { color:#a0a0a8;border-color:#2a2a32; }
+  .nav-btn:not(.active):hover { color:#f0ede8;border-color:#3a3a42; }
+
+  /* cards */
+  .card { background:#16161a;border:1px solid #2a2a32;border-radius:16px;padding:20px 24px; }
+  .card-sm { background:#1c1c22;border:1px solid #2a2a32;border-radius:12px;padding:16px 18px; }
+
+  /* tabs inside sections */
+  .inner-tab { padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .15s;border:1px solid #2a2a32; }
+  .inner-tab.on { background:#f5c842;color:#0e0e10;border-color:#f5c842;font-weight:600; }
+  .inner-tab:not(.on) { color:#7070788; }
+
+  /* progress ring */
+  .ring-track { fill:none;stroke:#2a2a32;stroke-width:8; }
+  .ring-fill { fill:none;stroke:#f5c842;stroke-width:8;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .6s ease; }
+
+  /* accordion */
+  .accord-body { max-height:0;overflow:hidden;transition:max-height .35s ease; }
+  .accord-body.open { max-height:800px; }
+  .accord-arrow { transition:transform .25s; }
+  .accord-arrow.open { transform:rotate(180deg); }
+
+  /* tooltip */
+  .tooltip { position:relative; }
+  .tooltip .tt { display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#2a2a32;color:#f0ede8;font-size:11px;padding:4px 8px;border-radius:6px;white-space:nowrap;z-index:10; }
+  .tooltip:hover .tt { display:block; }
+
+  /* resource pill */
+  .res-pill { display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:13px;text-decoration:none;border:1px solid #2a2a32;color:#c0c0c8;transition:all .15s;cursor:pointer; }
+  .res-pill:hover { border-color:#f5c842;color:#f5c842; }
+
+  /* note badge */
+  .note-badge { width:28px;height:28px;border-radius:50%;background:#f5c84222;color:#f5c842;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif; }
+
+  /* streak */
+  .flame { animation: flicker 1.2s infinite alternate; }
+  @keyframes flicker { from{opacity:.8;transform:scale(1)} to{opacity:1;transform:scale(1.08)} }
+</style>
+</head>
+<body>
+
+<div style="background:linear-gradient(135deg,#0e0e10 0%,#16100a 60%,#1a1206 100%);border-bottom:1px solid #2a2a32;">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div>
+        <div class="text-xs font-semibold tracking-widest text-yellow-500 mb-2 uppercase">Sam's Guitar Hub</div>
+        <h1 class="text-4xl md:text-5xl font-bold mb-2" style="color:#f5c842;letter-spacing:-1px;">30-Day Guitar<br>Journey 🎸</h1>
+        <p class="text-base" style="color:#8888a0;">Box guitar. Morning energy. Zero excuses.</p>
+      </div>
+      <svg width="180" height="120" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="hidden md:block">
+        <rect x="55" y="10" width="70" height="100" rx="30" fill="#1e1206" stroke="#3a2a10" stroke-width="1.5"/>
+        <rect x="65" y="30" width="50" height="60" rx="4" fill="#12100a"/>
+        <rect x="45" y="28" width="90" height="8" rx="3" fill="#2a1e0a" stroke="#3a2a10"/>
+        <rect x="45" y="84" width="90" height="8" rx="3" fill="#2a1e0a" stroke="#3a2a10"/>
+        <line class="string-line" x1="72" y1="32" x2="72" y2="88" stroke="#f5c842" stroke-width="1" style="animation-delay:.1s"/>
+        <line class="string-line" x1="80" y1="32" x2="80" y2="88" stroke="#d4a834" stroke-width="1.2" style="animation-delay:.2s"/>
+        <line class="string-line" x1="88" y1="32" x2="88" y2="88" stroke="#c09020" stroke-width="1.5" style="animation-delay:.3s"/>
+        <line class="string-line" x1="96" y1="32" x2="96" y2="88" stroke="#a87818" stroke-width="1.8" style="animation-delay:.4s"/>
+        <line class="string-line" x1="104" y1="32" x2="104" y2="88" stroke="#906010" stroke-width="2" style="animation-delay:.5s"/>
+        <line class="string-line" x1="112" y1="32" x2="112" y2="88" stroke="#785010" stroke-width="2.5" style="animation-delay:.6s"/>
+        <circle cx="90" cy="60" r="10" fill="none" stroke="#2a1e0a" stroke-width="1.5"/>
+      </svg>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8" id="stat-strip">
+      <div class="card-sm">
+        <div class="text-xs text-gray-500 mb-1">Days practiced</div>
+        <div class="text-2xl font-bold" style="font-family:'Space Grotesk',sans-serif;color:#f5c842;" id="stat-done">0</div>
+      </div>
+      <div class="card-sm">
+        <div class="text-xs text-gray-500 mb-1">Current streak</div>
+        <div class="text-2xl font-bold flex items-center gap-1" style="font-family:'Space Grotesk',sans-serif;color:#f5c842;">
+          <span id="stat-streak">0</span><span class="flame text-lg">🔥</span>
+        </div>
+      </div>
+      <div class="card-sm">
+        <div class="text-xs text-gray-500 mb-1">Completion</div>
+        <div class="text-2xl font-bold" style="font-family:'Space Grotesk',sans-serif;color:#f5c842;" id="stat-pct">0%</div>
+      </div>
+      <div class="card-sm">
+        <div class="text-xs text-gray-500 mb-1">Days left</div>
+        <div class="text-2xl font-bold" style="font-family:'Space Grotesk',sans-serif;color:#f5c842;" id="stat-left">30</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sticky top-0 z-50 flex items-center" style="background:#0e0e10cc;backdrop-filter:blur(12px);border-bottom:1px solid #2a2a32;">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto w-full items-center" id="main-nav">
+    <button class="nav-btn active" onclick="showSection('tracker',this)">📅 Tracker</button>
+    <button class="nav-btn" onclick="showSection('roadmap',this)">🗺 Roadmap</button>
+    <button class="nav-btn" onclick="showSection('chords',this)">🎵 Chords</button>
+    <button class="nav-btn" onclick="showSection('technique',this)">🤚 Technique</button>
+    <button class="nav-btn" onclick="showSection('resources',this)">📚 Resources</button>
+    
+    <button id="metro-btn" class="nav-btn ml-auto flex items-center gap-2" onclick="toggleMetronome()" style="color:#e879f9;border-color:#e879f933;">
+      ⏱ <span id="metro-label">60 BPM</span>
+    </button>
+  </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 py-8" id="main-content">
+
+<section id="sec-tracker">
+  <div class="flex flex-col md:flex-row gap-6">
+    <div class="card flex-1">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">June / July 2026 — Day by Day</h2>
+        <div class="flex gap-2">
+          <div class="flex items-center gap-1 text-xs text-gray-500"><div style="width:10px;height:10px;background:#1a3a2a;border:1.5px solid #22c55e;border-radius:3px;"></div> Done</div>
+          <div class="flex items-center gap-1 text-xs text-gray-500"><div style="width:10px;height:10px;background:#2a1a1a;border:1.5px solid #ef4444;border-radius:3px;"></div> Skipped</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2" id="day-grid"></div>
+      <div class="mt-4 flex gap-3 flex-wrap">
+        <button onclick="markToday('done')" class="text-xs px-4 py-2 rounded-lg font-semibold" style="background:#1a3a2a;color:#4ade80;border:1px solid #22c55e;">✓ Mark today practiced</button>
+        <button onclick="markToday('skip')" class="text-xs px-4 py-2 rounded-lg font-semibold" style="background:#2a1a1a;color:#f87171;border:1px solid #ef4444;">✗ Rest day</button>
+        <button onclick="clearAll()" class="text-xs px-4 py-2 rounded-lg" style="color:#555565;border:1px solid #2a2a32;">Reset all</button>
+        
+        <button onclick="exportData()" class="text-xs px-4 py-2 rounded-lg font-semibold" style="color:#818cf8;border:1px solid #3730a3;background:#1a1e3a;">↓ Backup Data</button>
+        <button onclick="document.getElementById('import-file').click()" class="text-xs px-4 py-2 rounded-lg font-semibold" style="color:#818cf8;border:1px solid #3730a3;background:#1a1e3a;">↑ Load Data</button>
+        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)" />
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4 w-full md:w-60">
+      <div class="card flex flex-col items-center py-6">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle class="ring-track" cx="50" cy="50" r="42"/>
+          <circle class="ring-fill" cx="50" cy="50" r="42" id="ring-fill" stroke-dasharray="264" stroke-dashoffset="264"/>
+        </svg>
+        <div class="text-center mt-2">
+          <div class="text-xs text-gray-500">Monthly progress</div>
+          <div class="text-xl font-bold mt-1" style="color:#f5c842;font-family:'Space Grotesk',sans-serif;" id="ring-label">0 / 30</div>
+        </div>
+      </div>
+
+      <div class="card flex-1">
+        <div class="text-xs text-gray-500 mb-2">Today's focus</div>
+        <div id="today-focus" class="text-sm leading-relaxed" style="color:#c0c0c8;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-6">
+    <h3 class="font-semibold mb-3">Practice notes</h3>
+    <div class="flex gap-2 mb-3">
+      <input id="note-input" type="text" placeholder="What did you work on today? (e.g. Em chord transitions, 20 min)" class="flex-1 text-sm rounded-lg px-3 py-2" style="background:#1c1c22;border:1px solid #2a2a32;color:#f0ede8;outline:none;" />
+      <button onclick="addNote()" class="px-4 py-2 rounded-lg text-sm font-semibold" style="background:#f5c842;color:#0e0e10;">Add</button>
+    </div>
+    <div id="notes-list" class="flex flex-col gap-2"></div>
+  </div>
+</section>
+
+<section id="sec-roadmap" class="hidden">
+  <h2 class="text-2xl font-bold mb-1" style="color:#f5c842;">Your 30-day roadmap</h2>
+  <p class="text-sm text-gray-500 mb-6">Four phases. Each builds on the last. The goal: play a full worship song by day 30.</p>
+  <div class="flex flex-col gap-4" id="roadmap-list"></div>
+</section>
+
+<section id="sec-chords" class="hidden">
+  <h2 class="text-2xl font-bold mb-1" style="color:#f5c842;">Chord library</h2>
+  <p class="text-sm text-gray-500 mb-6">The essential shapes that unlock most gospel, worship, and Kenyan pop.</p>
+  <div class="flex flex-wrap gap-2 mb-6" id="chord-filter">
+    <button class="inner-tab on" onclick="filterChord('all',this)">All</button>
+    <button class="inner-tab" onclick="filterChord('beginner',this)">Beginner</button>
+    <button class="inner-tab" onclick="filterChord('intermediate',this)">Intermediate</button>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="chord-grid"></div>
+</section>
+
+<section id="sec-technique" class="hidden">
+  <h2 class="text-2xl font-bold mb-1" style="color:#f5c842;">Technique guides</h2>
+  <p class="text-sm text-gray-500 mb-6">Step-by-step walkthroughs. Read these before you pick up the guitar each session.</p>
+  <div class="flex flex-col gap-3" id="tech-list"></div>
+</section>
+
+<section id="sec-resources" class="hidden">
+  <h2 class="text-2xl font-bold mb-1" style="color:#f5c842;">Detailed resources</h2>
+  <p class="text-sm text-gray-500 mb-6">Everything you need — free, curated, and ranked by usefulness for a self-taught box guitar learner in Kenya.</p>
+  <div class="flex flex-col gap-6" id="res-list"></div>
+</section>
+
+</div><footer class="text-center text-xs text-gray-600 py-8 border-t border-gray-800 mt-4">
+  Built for Sam · PataSpace Architecture
+</footer>
+
+<script>
+// ===================== DATA =====================
+
+const ROADMAP = [
+  {
+    phase:"Phase 1", days:"Days 1–7", title:"Foundations & anatomy",
+    color:"#1a3a2a", accent:"#22c55e",
+    goal:"Get comfortable holding the guitar, know the strings, fret clean notes.",
+    tasks:[
+      {day:1, task:"Tune your guitar with GuitarTuna app. Learn the 6 string names: E A D G B e."},
+      {day:2, task:"Correct sitting posture: guitar on right leg, neck angled up, left thumb BEHIND neck."},
+      {day:3, task:"Fret a single clean note on low E string, 1st fret. No buzzing = success."},
+      {day:4, task:"1-2-3-4 chromatic exercise: one finger per fret across one string, slow."},
+      {day:5, task:"Repeat chromatic on all 6 strings. Your fingertips will hurt — normal."},
+      {day:6, task:"Learn finger numbers: index=1, middle=2, ring=3, pinky=4. Practice calling them while pressing frets."},
+      {day:7, task:"Review days 1–6. Tune again, chromatic again. Record yourself for 60 seconds."},
+    ]
+  },
+  {
+    phase:"Phase 2", days:"Days 8–16", title:"Essential chords",
+    color:"#1a1e3a", accent:"#818cf8",
+    goal:"Learn Em, Am, G, C, D. Switch between them smoothly.",
+    tasks:[
+      {day:8, task:"Em chord: middle finger 5th string 2nd fret, ring finger 4th string 2nd fret. Strum all 6."},
+      {day:9, task:"Am chord: index 2nd fret B, middle 2nd fret G, ring 2nd fret D. Strum 5 strings."},
+      {day:10, task:"Switch Em → Am → Em, 20 times without stopping. Keep going even if messy."},
+      {day:11, task:"G major: ring on low E 3rd fret, middle on A 2nd fret, pinky on high e 3rd fret."},
+      {day:12, task:"C major: ring on A 3rd fret, middle on D 2nd fret, index on B 1st fret."},
+      {day:13, task:"Practise Em–Am–G–C loop, 4 beats each at 60 BPM."},
+      {day:14, task:"D major: index on G 2nd fret, middle on high e 2nd fret, ring on B 3rd fret. Skip low E and A."},
+      {day:15, task:"Run the full 5-chord sequence: Em → Am → G → C → D → back."},
+      {day:16, task:"Boss battle: smoothly cycle all 5 chords to a metronome at 70 BPM. Record it."},
+    ]
+  },
+  {
+    phase:"Phase 3", days:"Days 17–24", title:"Rhythm & strumming",
+    color:"#3a1a10", accent:"#f97316",
+    goal:"Develop consistent rhythm. Learn the patterns used in worship music.",
+    tasks:[
+      {day:17, task:"Downstroke only: D D D D on Em at 60 BPM. One strum per beat."},
+      {day:18, task:"Add upstroke: D DU DU — the workhorse pattern of gospel strumming."},
+      {day:19, task:"Strumming pattern 2: D D U D U. Common in Swahili worship."},
+      {day:20, task:"Clap along to 3 songs you know. Find the beat in your body before the guitar."},
+      {day:21, task:"Apply D DU DU pattern while changing Em → Am → G → C."},
+      {day:22, task:"Muted strumming (palm mute): rest palm lightly on strings near the bridge while strumming."},
+      {day:23, task:"Fingerpicking basics: p i m a (thumb, index, middle, ring). Pluck strings 6–5–4–3 in sequence."},
+      {day:24, task:"Boss battle: record yourself playing 2 chord changes with full strumming pattern for 2 minutes."},
+    ]
+  },
+  {
+    phase:"Phase 4", days:"Days 25–30", title:"First complete song",
+    color:"#3a1a30", accent:"#e879f9",
+    goal:"Learn one full song and perform it — even privately.",
+    tasks:[
+      {day:25, task:"Pick your song. Suggestions: 'Way Maker' (Em C G D), 'Goodness of God' (G C D Em), or 'Mungu ni Mwema'."},
+      {day:26, task:"Find the chord chart. Search '[song name] guitar chords' on Ultimate Guitar."},
+      {day:27, task:"Play through chord sequence slowly, no singing. Just the chord changes."},
+      {day:28, task:"Add the strumming pattern. Still no singing — hands need to be automatic first."},
+      {day:29, task:"Sing while playing. Your hands will freeze — push through. This IS the milestone."},
+      {day:30, task:"FINAL BOSS: Play the full song for someone. Angel, family, phone video. That's it. You did it. 🎸"},
+    ]
+  }
+];
+
+const CHORDS = [
+  {
+    name:"Em", full:"E minor", level:"beginner", color:"#1a3a2a", accent:"#22c55e",
+    why:"Your first chord. Easiest shape, dramatic sound. Used in almost every song.",
+    diagram:`
+    E  A  D  G  B  e
+    ○  2  3  ○  ○  ○
+    ─────────────────
+    |  |  |  |  |  |
+    |  ●  ●  |  |  |
+    |  |  |  |  |  |
+    `,
+    tip:"Keep fingers arched. Both on the 2nd fret, side by side."
+  },
+  {
+    name:"Am", full:"A minor", level:"beginner", color:"#1a3a2a", accent:"#22c55e",
+    why:"Partners with Em perfectly. Together they form the backbone of minor-key worship.",
+    diagram:`
+    E  A  D  G  B  e
+    x  ○  2  3  1  ○
+    ─────────────────
+    |  |  |  |  ●  |
+    |  |  ●  ●  |  |
+    |  |  |  |  |  |
+    `,
+    tip:"Skip low E string (mute with thumb or avoid). Strum strings A to e (5 strings)."
+  },
+  {
+    name:"Dm", full:"D minor", level:"beginner", color:"#1a3a2a", accent:"#22c55e",
+    why:"Completes the minor family (Em, Am, Dm). Very common in sad or reflective sections.",
+    diagram:`
+    E  A  D  G  B  e
+    x  x  ○  2  3  1
+    ─────────────────
+    |  |  |  |  |  ●
+    |  |  |  ●  |  |
+    |  |  |  |  ●  |
+    `,
+    tip:"Only strum 4 strings (D, G, B, e). Skip the top two."
+  },
+  {
+    name:"G", full:"G major", level:"beginner", color:"#1a3a2a", accent:"#22c55e",
+    why:"Bright, full sound. The 'happy' chord. Common in upbeat worship songs.",
+    diagram:`
+    E  A  D  G  B  e
+    3  2  ○  ○  ○  3
+    ─────────────────
+    |  ●  |  |  |  |
+    |  |  |  |  |  ●
+    ●  |  |  |  |  |
+    `,
+    tip:"Stretch ring to low E, pinky to high e. Middle finger on A. Strum all 6 strings."
+  },
+  {
+    name:"C", full:"C major", level:"beginner", color:"#1a3a2a", accent:"#22c55e",
+    why:"Completes the G-C-D family. Together with G and D you can play hundreds of songs.",
+    diagram:`
+    E  A  D  G  B  e
+    x  3  2  ○  1  ○
+    ─────────────────
+    |  |  |  |  ●  |
+    |  |  ●  |  |  |
+    |  ●  |  |  |  |
+    `,
+    tip:"Mute the low E. This chord is the hardest shape of the beginner set — give it time."
+  },
+  {
+    name:"D", full:"D major", level:"beginner", color:"#1a3a2a", accent:"#22c55e",
+    why:"Bright and powerful. The 'triumphant' chord. Common in praise and worship.",
+    diagram:`
+    E  A  D  G  B  e
+    x  x  ○  1  3  2
+    ─────────────────
+    |  |  |  ●  |  |
+    |  |  |  |  ●  ●
+    |  |  |  |  |  |
+    `,
+    tip:"Only strum strings D, G, B, high e (4 strings). Skip E and A entirely."
+  },
+  {
+    name:"Fmaj7", full:"F Major 7", level:"intermediate", color:"#1a1e3a", accent:"#818cf8",
+    why:"The cheat code for the F chord. It sounds beautiful, dreamy, and requires zero barring.",
+    diagram:`
+    E  A  D  G  B  e
+    x  x  3  2  1  0
+    ─────────────────
+    |  |  |  |  ●  |
+    |  |  |  ●  |  |
+    |  |  ●  |  |  |
+    `,
+    tip:"It looks like a staircase! Just play the bottom 4 strings and leave the highest e string open."
+  },
+  {
+    name:"F", full:"F major", level:"intermediate", color:"#1a1e3a", accent:"#818cf8",
+    why:"The barre chord wall. Once you crack F, all other barre chords open up.",
+    diagram:`
+    E  A  D  G  B  e
+    1  1  2  3  4  1
+    ─────────────────
+    ●  |  |  |  |  ●
+    ●  ●  |  |  |  |
+    |  |  ●  ●  ●  |
+    `,
+    tip:"Index finger barres ALL 6 strings at fret 1. Takes weeks of practice — that's normal."
+  }
+];
+
+const TECHNIQUES = [
+  {
+    title:"How to hold the guitar correctly",
+    icon:"🎸",
+    steps:[
+      "Sit upright on a chair with no armrests if possible.",
+      "Rest the waist of the guitar on your right thigh. Your body should feel the guitar, not grip it.",
+      "The neck should angle upward at about 45° — never parallel to the floor.",
+      "Left thumb should sit behind the neck, roughly opposite your middle finger.",
+      "Keep your picking wrist loose. Think of it like gently shaking water off your hand."
+    ],
+    warning:"If your wrist or forearm aches, you're gripping too tight. Stop, shake out, restart."
+  },
+  {
+    title:"How to fret a clean note",
+    icon:"🤚",
+    steps:[
+      "Press the string with the fingertip (not the pad). Keep nails short.",
+      "Press as close to the fret wire as possible without being on it.",
+      "Pluck the string and listen. Buzzing = not close enough to fret or not enough pressure.",
+      "Check: are any fingers accidentally touching adjacent strings? Arch your finger more."
+    ],
+    warning:"Calluses take 2–3 weeks to develop. The fingertip soreness is temporary. Don't stop."
+  },
+  {
+    title:"How to strum properly",
+    icon:"🎵",
+    steps:[
+      "Hold the pick between your thumb and index finger. Grip lightly.",
+      "The motion comes from the wrist, not the elbow. Like gently tapping your knee to a beat.",
+      "Downstroke: brush ACROSS the strings downward. Keep the pick at a slight angle.",
+      "Upstroke: brush back up, but only catch 2-4 of the thinner strings."
+    ],
+    warning:"Do NOT look at your strumming hand. Your ear will tell you if it's wrong. Trust it."
+  },
+  {
+    title:"How to Read Guitar Tabs",
+    icon:"📄",
+    steps:[
+      "Tabs have 6 lines. The top line is the thinnest string (high e). The bottom line is the thickest string (low E). It looks upside down at first.",
+      "Numbers on the lines tell you which fret to press.",
+      "A '0' means play the string open (don't press any fret).",
+      "If numbers are stacked vertically, strum them all at the same time (it's a chord).",
+      "If numbers are spread out horizontally, play them one by one (a melody or solo)."
+    ],
+    warning:"Tabs do not tell you the rhythm or how long to hold a note. You have to listen to the song to know the timing."
+  }
+];
+
+const RESOURCES = [
+  {
+    category:"📱 Free apps (install these first)",
+    items:[
+      {name:"GuitarTuna", desc:"Best free tuner for box guitar. Works with the mic.", link:"https://www.yousician.com/guitartuna", type:"app", rating:5},
+      {name:"Metronome Beats", desc:"Simple, reliable metronome.", link:"https://play.google.com/store/apps/details?id=com.andymstone.metronome", type:"app", rating:5},
+      {name:"Ultimate Guitar (Tabs)", desc:"Largest chord/tab database in the world.", link:"https://www.ultimate-guitar.com", type:"web", rating:5},
+      {name:"Chordify", desc:"Auto-detects chords from YouTube links. Great for local Kenyan songs.", link:"https://chordify.net", type:"web", rating:4},
+    ]
+  },
+  {
+    category:"📺 YouTube channels — best for self-taught beginners",
+    items:[
+      {name:"JustinGuitar", desc:"The best structured beginner curriculum on the internet.", link:"https://www.youtube.com/@justinguitar", type:"youtube", rating:5},
+      {name:"Marty Music", desc:"Clear, calm, no-fluff lessons.", link:"https://www.youtube.com/@MartyMusic", type:"youtube", rating:5},
+      {name:"Khea Music (Kenya)", desc:"Kenyan gospel music tutorials. Swahili and English.", link:"https://www.youtube.com/@KheaMusic", type:"youtube", rating:4},
+    ]
+  },
+  {
+    category:"🔧 Kenyan Gear Guide & Maintenance",
+    items:[
+      {name:"Buying Strings locally", desc:"Look for 'Acoustic Phosphor Bronze' strings. Ernie Ball Earthwood or D'Addario are good. Avoid cheap unbranded nylon strings on a steel-string guitar.", link:"#", type:"tip"},
+      {name:"Where to buy", desc:"You can order strings on Jumia (Ksh 800 - Ksh 1,500) or check local music shops in major towns. Always keep a spare set.", link:"https://www.jumia.co.ke", type:"tip"},
+      {name:"Cleaning the fretboard", desc:"Every 2–3 months: use a dry cloth to wipe off sweat. Dirty frets kill the tone of the strings.", link:"#", type:"tip"},
+      {name:"Humidity care", desc:"Keep your guitar out of direct sunlight and away from damp walls. Wood warps easily.", link:"#", type:"tip"},
+    ]
+  }
+];
+
+// ===================== STATE =====================
+let state = JSON.parse(localStorage.getItem('guitar-hub-state') || '{"days":{},"notes":[]}');
+const DAY_START = new Date('2026-06-23');
+
+function save() { localStorage.setItem('guitar-hub-state', JSON.stringify(state)); }
+
+function getDayIndex(d = new Date()) {
+  const today = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const start = new Date(DAY_START.getFullYear(), DAY_START.getMonth(), DAY_START.getDate());
+  return Math.floor((today - start) / 86400000);
+}
+
+// ===================== DATA BACKUP & IMPORT =====================
+function exportData() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+  const dlAnchorElem = document.createElement('a');
+  dlAnchorElem.setAttribute("href", dataStr);
+  dlAnchorElem.setAttribute("download", "guitar-hub-backup.json");
+  dlAnchorElem.click();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedState = JSON.parse(e.target.result);
+      if (importedState.days && importedState.notes) {
+        state = importedState;
+        save();
+        buildDayGrid();
+        updateStats();
+        renderNotes();
+        alert("Progress loaded successfully!");
+      }
+    } catch (err) {
+      alert("Invalid backup file.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ===================== METRONOME =====================
+let audioCtx;
+let metroInterval;
+let isPlaying = false;
+let bpm = 60;
+
+function playClick() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.frequency.value = 800; // Pitch of the click
+  gain.gain.setValueAtTime(1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function toggleMetronome() {
+  const btn = document.getElementById('metro-btn');
+  if (isPlaying) {
+    clearInterval(metroInterval);
+    isPlaying = false;
+    btn.style.background = 'transparent';
+    btn.style.color = '#e879f9';
+  } else {
+    const input = prompt("Enter BPM:", bpm);
+    if (input && !isNaN(input)) bpm = parseInt(input);
+    document.getElementById('metro-label').innerText = bpm + " BPM";
+    
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const msPerBeat = 60000 / bpm;
+    playClick(); // play first beat immediately
+    metroInterval = setInterval(playClick, msPerBeat);
+    isPlaying = true;
+    btn.style.background = '#3a1a30';
+    btn.style.color = '#e879f9';
+  }
+}
+
+// ===================== TRACKER =====================
+function buildDayGrid() {
+  const grid = document.getElementById('day-grid');
+  grid.innerHTML = '';
+  const todayIdx = getDayIndex();
+  for (let i = 0; i < 30; i++) {
+    const d = state.days[i];
+    let cls = 'day-cell';
+    if (d === 'done') cls += ' day-done';
+    else if (d === 'skip') cls += ' day-skipped';
+    else if (i === todayIdx) cls += ' day-today';
+    else if (i > todayIdx) cls += ' day-future';
+    const el = document.createElement('div');
+    el.className = cls;
+    el.setAttribute('data-idx', i);
+    el.onclick = () => cycleDay(i);
+    const tt = document.createElement('div');
+    tt.className = 'tooltip';
+    tt.innerHTML = `<span class="tt">Day ${i+1}</span>`;
+    el.title = `Day ${i + 1}`;
+    el.textContent = i + 1;
+    grid.appendChild(el);
+  }
+}
+
+function cycleDay(i) {
+  const cur = state.days[i];
+  if (!cur) state.days[i] = 'done';
+  else if (cur === 'done') state.days[i] = 'skip';
+  else delete state.days[i];
+  save();
+  buildDayGrid();
+  updateStats();
+}
+
+function markToday(type) {
+  const idx = getDayIndex();
+  if (idx < 0 || idx >= 30) return;
+  state.days[idx] = type;
+  save();
+  buildDayGrid();
+  updateStats();
+}
+
+function clearAll() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  state.days = {};
+  state.notes = [];
+  save();
+  buildDayGrid();
+  updateStats();
+  renderNotes();
+}
+
+function updateStats() {
+  const done = Object.values(state.days).filter(v => v === 'done').length;
+  const pct = Math.round(done / 30 * 100);
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('stat-left').textContent = Math.max(0, 30 - Object.keys(state.days).length);
+  
+  // CORRECTED STREAK LOGIC
+  const todayIdx = getDayIndex();
+  let streak = 0;
+  let startIdx = state.days[todayIdx] === 'done' ? todayIdx : todayIdx - 1;
+  for (let i = startIdx; i >= 0; i--) {
+    if (state.days[i] === 'done') streak++;
+    else if (state.days[i] !== 'skip') break; 
+  }
+  document.getElementById('stat-streak').textContent = streak;
+  
+  // ring
+  const circumference = 264;
+  const offset = circumference - (done / 30) * circumference;
+  document.getElementById('ring-fill').style.strokeDashoffset = offset;
+  document.getElementById('ring-label').textContent = done + ' / 30';
+  
+  // today focus
+  const idx = getDayIndex();
+  const focus = document.getElementById('today-focus');
+  if (idx < 0 || idx >= 30) { focus.textContent = 'You\'re outside the 30-day window. Set a new start date!'; return; }
+  const phaseIdx = idx < 7 ? 0 : idx < 16 ? 1 : idx < 24 ? 2 : 3;
+  const task = ROADMAP[phaseIdx].tasks.find(t => t.day === idx + 1);
+  focus.innerHTML = task ? `<span style="color:#f5c842;font-weight:600;">Day ${idx+1}:</span> ${task.task}` : `Keep going! Day ${idx+1}.`;
+}
+
+// ===================== NOTES =====================
+function addNote() {
+  const inp = document.getElementById('note-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  state.notes.unshift({ text: val, date: new Date().toLocaleDateString('en-KE', {day:'numeric',month:'short'}) });
+  inp.value = '';
+  save();
+  renderNotes();
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!state.notes.length) { list.innerHTML = '<p class="text-xs text-gray-600">No notes yet. Log what you practiced!</p>'; return; }
+  list.innerHTML = state.notes.slice(0, 10).map((n, i) => `
+    <div class="flex items-start gap-3 card-sm">
+      <div class="note-badge flex-shrink-0">${i === 0 ? '★' : (state.notes.length - i)}</div>
+      <div class="flex-1">
+        <p class="text-sm" style="color:#c0c0c8;">${n.text}</p>
+        <p class="text-xs mt-1" style="color:#555565;">${n.date}</p>
+      </div>
+      <button onclick="deleteNote(${i})" class="text-xs" style="color:#555565;" title="Delete">✕</button>
+    </div>
+  `).join('');
+}
+
+function deleteNote(i) { state.notes.splice(i, 1); save(); renderNotes(); }
+
+// ===================== ROADMAP =====================
+function buildRoadmap() {
+  const list = document.getElementById('roadmap-list');
+  list.innerHTML = ROADMAP.map((phase, pi) => `
+    <div class="card" style="border-color:${phase.accent}33;">
+      <div class="flex items-start justify-between mb-3 cursor-pointer" onclick="togglePhase(${pi})">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest" style="color:${phase.accent};">${phase.phase} · ${phase.days}</span>
+          <h3 class="text-lg font-bold mt-1">${phase.title}</h3>
+          <p class="text-sm mt-1" style="color:#8888a0;">${phase.goal}</p>
+        </div>
+        <div class="accord-arrow text-2xl ml-4 mt-1" id="arrow-${pi}" style="color:${phase.accent};">›</div>
+      </div>
+      <div class="accord-body" id="phase-body-${pi}">
+        <div class="flex flex-col gap-2 mt-2">
+          ${phase.tasks.map(t => `
+            <div class="card-sm flex items-start gap-3">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:${phase.color};color:${phase.accent};">${t.day}</div>
+              <p class="text-sm leading-relaxed" style="color:#c0c0c8;">${t.task}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function togglePhase(pi) {
+  const body = document.getElementById(`phase-body-${pi}`);
+  const arrow = document.getElementById(`arrow-${pi}`);
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ===================== CHORDS =====================
+function buildChords(filter = 'all') {
+  const grid = document.getElementById('chord-grid');
+  const chords = filter === 'all' ? CHORDS : CHORDS.filter(c => c.level === filter);
+  grid.innerHTML = chords.map((c, ci) => `
+    <div class="card" style="border-left:3px solid ${c.accent};">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <span class="text-2xl font-bold" style="color:${c.accent};font-family:'Space Grotesk',sans-serif;">${c.name}</span>
+          <span class="text-sm ml-2" style="color:#8888a0;">${c.full}</span>
+        </div>
+        <span class="text-xs px-2 py-1 rounded-full" style="background:${c.level === 'beginner' ? '#1a3a2a' : '#1a1e3a'};color:${c.level === 'beginner' ? '#22c55e' : '#818cf8'};">${c.level}</span>
+      </div>
+      <p class="text-sm mb-3" style="color:#8888a0;">${c.why}</p>
+      <div class="rounded-lg p-3 mb-3" style="background:#0e0e10;font-family:monospace;font-size:12px;color:#c0c0c8;white-space:pre;">${c.diagram}</div>
+      <div class="card-sm text-xs" style="color:#a0a0a8;"><span style="color:#f5c842;">💡 Tip:</span> ${c.tip}</div>
+    </div>
+  `).join('');
+}
+
+function filterChord(filter, btn) {
+  document.querySelectorAll('#chord-filter .inner-tab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  buildChords(filter);
+}
+
+// ===================== TECHNIQUE =====================
+function buildTechnique() {
+  const list = document.getElementById('tech-list');
+  list.innerHTML = TECHNIQUES.map((t, i) => `
+    <div class="card cursor-pointer" onclick="toggleTech(${i})">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">${t.icon}</span>
+          <h3 class="font-semibold">${t.title}</h3>
+        </div>
+        <div class="accord-arrow text-xl" id="tech-arrow-${i}" style="color:#f5c842;">›</div>
+      </div>
+      <div class="accord-body" id="tech-body-${i}">
+        <div class="mt-4 flex flex-col gap-2">
+          ${t.steps.map((s, si) => `
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background:#f5c84222;color:#f5c842;">${si+1}</div>
+              <p class="text-sm leading-relaxed" style="color:#c0c0c8;">${s}</p>
+            </div>
+          `).join('')}
+          <div class="mt-3 rounded-lg p-3 text-sm" style="background:#2a1a0a;border:1px solid #f97316;color:#fdba74;">
+            ⚠️ ${t.warning}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleTech(i) {
+  const body = document.getElementById(`tech-body-${i}`);
+  const arrow = document.getElementById(`tech-arrow-${i}`);
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ===================== RESOURCES =====================
+function buildResources() {
+  const list = document.getElementById('res-list');
+  const typeIcons = { app:'📱', youtube:'▶️', web:'🌐', song:'🎵', tip:'🔧' };
+  list.innerHTML = RESOURCES.map(section => `
+    <div>
+      <h3 class="text-base font-semibold mb-3" style="color:#f5c842;">${section.category}</h3>
+      <div class="flex flex-col gap-3">
+        ${section.items.map(item => `
+          <div class="card-sm">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-sm">${typeIcons[item.type] || '•'}</span>
+                  <span class="font-semibold text-sm">${item.name}</span>
+                  ${item.rating ? `<span style="color:#f5c842;font-size:12px;">${'★'.repeat(item.rating)}</span>` : ''}
+                </div>
+                <p class="text-sm leading-relaxed" style="color:#8888a0;">${item.desc}</p>
+              </div>
+              ${item.link && item.link !== '#' ? `
+                <a href="${item.link}" target="_blank" rel="noopener" class="res-pill flex-shrink-0 text-xs">
+                  Visit ↗
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== NAV =====================
+const sections = ['tracker','roadmap','chords','technique','resources'];
+function showSection(id, btn) {
+  sections.forEach(s => {
+    const el = document.getElementById('sec-' + s);
+    if (el) el.classList.toggle('hidden', s !== id);
+  });
+  document.querySelectorAll('#main-nav .nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===================== INIT =====================
+buildDayGrid();
+updateStats();
+renderNotes();
+buildRoadmap();
+buildChords();
+buildTechnique();
+buildResources();
+
+// enter key for notes
+document.getElementById('note-input').addEventListener('keydown', e => { if (e.key === 'Enter') addNote(); });
+</script>
+</body>
+</html>
